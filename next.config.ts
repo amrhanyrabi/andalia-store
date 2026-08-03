@@ -56,14 +56,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/supabase-proxy/:path*",
-        destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_DATABASE_URL || "https://placeholder.supabase.co"}/:path*`,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
