@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Zoer.ai",
-  description: "Zoer.ai",
+  title: "Andalia Store",
+  description: "Andalia Store",
 };
 
 export default function RootLayout({
