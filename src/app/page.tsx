@@ -107,10 +107,10 @@ export default function StorefrontPage() {
         <header className="flex flex-col gap-4 rounded-3xl border bg-card/85 p-4 shadow-sm backdrop-blur md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff4747] font-bold text-white shadow-sm">
-              AX
+              AS
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t.storefront}</p>
+              <p className="text-sm text-muted-foreground">Andalia Store</p>
               <h1 className="text-xl font-bold tracking-tight">{t.featured}</h1>
             </div>
           </div>
@@ -126,12 +126,6 @@ export default function StorefrontPage() {
               </SelectContent>
             </Select>
             <ThemeToggle />
-            <Button asChild variant="outline" className="rounded-full">
-              <a href="/admin">
-                <ShieldCheck className="h-4 w-4" />
-                {t.admin}
-              </a>
-            </Button>
           </div>
         </header>
 
