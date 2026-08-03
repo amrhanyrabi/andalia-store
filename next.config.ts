@@ -53,8 +53,16 @@ const nextConfig: NextConfig = {
       },
       {
         hostname: "cdn.chat2db-ai.com",
-      }
+      },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/supabase-proxy/:path*",
+        destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_DATABASE_URL || "https://placeholder.supabase.co"}/:path*`,
+      },
+    ];
   },
 };
 
