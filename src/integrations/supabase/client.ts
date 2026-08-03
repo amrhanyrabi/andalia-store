@@ -1,19 +1,22 @@
 // This file is protected and cannot be modified.
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = 
+// تأكيد قراءة الـ URL والـ Key بشكل مباشر ونظيف
+const supabaseUrl = (
   process.env.NEXT_PUBLIC_DATABASE_URL || 
   process.env.NEXT_PUBLIC_SUPABASE_URL || 
-  "https://placeholder.supabase.co";
+  ""
+).trim().replace(/\/+$/, ""); // إزالة أي / زائدة في آخر اللينك
 
-const supabaseKey = 
+const supabaseKey = (
   process.env.NEXT_PUBLIC_DATABASE_PUBLISHABLE_KEY || 
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
-  "placeholder-key";
+  ""
+).trim();
 
 export const supabase = createClient(
-  supabaseUrl.trim(),
-  supabaseKey.trim(),
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseKey || "placeholder-key",
   {
     auth: {
       storage: typeof window !== 'undefined' ? localStorage : undefined,
