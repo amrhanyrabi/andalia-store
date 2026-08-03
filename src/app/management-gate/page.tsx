@@ -27,7 +27,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
 import {
   emptyProductForm,
   fallbackProducts,
@@ -135,37 +134,26 @@ export default function AdminPage() {
   const isArabic = language === "ar";
 
   async function loadAdminState() {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const session = sessionData.session;
-    setIsAuthenticated(Boolean(session));
-
-    const { data: hasAdminData } = await supabase.rpc("has_admin");
-    setHasAdmin(Boolean(hasAdminData));
-
-    if (session?.user) {
-      const { data: adminRows } = await supabase
-        .from("admin_users")
-        .select("user_id,email,created_at")
-        .eq("user_id", session.user.id)
-        .limit(1);
-
-      setIsAdmin(Boolean(adminRows && adminRows.length > 0));
-    } else {
-      setIsAdmin(false);
+    try {
+      const response = await fetch("/api/auth/status");
+      const data = await response.json();
+      setIsAuthenticated(data.isAuthenticated);
+      setIsAdmin(data.isAdmin);
+      setHasAdmin(data.hasAdmin);
+    } catch (error) {
+      console.error("Auth status error:", error);
     }
   }
 
   async function loadProducts() {
-    const { data, error } = await supabase
-      .from("products")
-      .select(
-        "id,title_ar,title_en,description_ar,description_en,price,image_url,affiliate_link,category_ar,category_en,created_at,updated_at"
-      )
-      .order("created_at", { ascending: false })
-      .limit(100);
-
-    if (!error && data && data.length > 0) {
-      setProducts(data.map((product) => normalizeProduct(product as Product)));
+    try {
+      const response = await fetch("/api/products", { cache: "no-store" });
+      const payload = await response.json();
+      if (payload.products) {
+        setProducts(payload.products.map((product: any) => normalizeProduct(product as Product)));
+      }
+    } catch (error) {
+      console.error("Load products error:", error);
     }
   }
 
@@ -180,13 +168,8 @@ export default function AdminPage() {
 
     initialize();
 
-    const { data } = supabase.auth.onAuthStateChange(() => {
-      loadAdminState();
-    });
-
     return () => {
       isMounted = false;
-      data.subscription.unsubscribe();
     };
   }, []);
 
@@ -244,12 +227,20 @@ export default function AdminPage() {
       price: Number(form.price),
     };
 
-    const result = editingProductId
-      ? await supabase.from("products").update(payload).eq("id", editingProductId)
-      : await supabase.from("products").insert(payload);
+    const url = "/api/products";
+    const method = editingProductId ? "PUT" : "POST";
+    const body = editingProductId ? { ...payload, id: editingProductId } : payload;
+
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const result = await response.json();
 
     if (result.error) {
-      setMessage(result.error.message);
+      setMessage(result.error);
       return;
     }
 
@@ -259,12 +250,16 @@ export default function AdminPage() {
     await loadProducts();
   }
 
-  async function handleDelete(productId: number) {
+  async function handleDelete(productId: any) {
     setMessage("");
-    const { error } = await supabase.from("products").delete().eq("id", productId);
+    const response = await fetch(`/api/products?id=${productId}`, {
+      method: "DELETE",
+    });
 
-    if (error) {
-      setMessage(error.message);
+    const result = await response.json();
+
+    if (result.error) {
+      setMessage(result.error);
       return;
     }
 
@@ -297,10 +292,16 @@ export default function AdminPage() {
     event.preventDefault();
     setMessage("");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-    if (error) {
-      setMessage(error.message);
+    const result = await response.json();
+
+    if (result.error) {
+      setMessage(result.error);
       return;
     }
 
@@ -315,29 +316,16 @@ export default function AdminPage() {
       return;
     }
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
 
-    if (signUpError) {
-      setMessage(signUpError.message);
-      return;
-    }
+    const result = await response.json();
 
-    const userId = signUpData.user?.id;
-    if (!userId) {
-      setMessage("Account created. Please sign in to finish admin setup.");
-      return;
-    }
-
-    const { error: insertError } = await supabase.from("admin_users").insert({
-      user_id: userId,
-      email,
-    });
-
-    if (insertError) {
-      setMessage(insertError.message);
+    if (result.error) {
+      setMessage(result.error);
       return;
     }
 
@@ -345,7 +333,7 @@ export default function AdminPage() {
   }
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     setIsAuthenticated(false);
     setIsAdmin(false);
     setMessage("");
