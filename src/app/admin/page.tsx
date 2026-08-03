@@ -382,7 +382,7 @@ export default function AdminPage() {
             <Button asChild variant="outline" className="rounded-full">
               <a href="/">
                 <ArrowLeft className="h-4 w-4" />
-                {t.storefront}
+                Andalia Store
               </a>
             </Button>
             {isAuthenticated && (
